@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Send OTP</title>
+</head>
+<body>
+  <h2>Send OTP</h2>
+  <input type="email" id="email" placeholder="Enter your email" required><br><br>
+  <textarea id="customMsg" placeholder="Custom message for email (optional)"></textarea><br><br>
+  <button onclick="sendOtp()">Send OTP</button>
+  <p id="response" style="color:green;"></p>
+
+  <script>
+    function sendOtp() {
+      const email = document.getElementById('email').value;
+      const customMessage = document.getElementById('customMsg').value;
+
+      fetch('/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, customMessage })
+      })
+      .then(res => res.json())
+      .then(data => document.getElementById('response').innerText = data.message)
+      .catch(err => document.getElementById('response').innerText = 'Error sending OTP');
+    }
+  </script>
+</body>
+</html>
