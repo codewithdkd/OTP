@@ -6,7 +6,7 @@ const path = require("path");
 const app = express();
 
 // Railway assigns port via environment variable
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
