@@ -1,29 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Send OTP</title>
+  <meta charset="UTF-8">
+  <title>OTP App</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    input, button { padding: 10px; margin: 5px; }
+  </style>
 </head>
 <body>
-  <h2>Send OTP</h2>
-  <form id="sendOtpForm">
-    <input type="email" id="email" placeholder="Enter your email" required />
-    <button type="submit">Send OTP</button>
-  </form>
+  <h1>✅ OTP Server is Running!</h1>
+  <p>This is your landing page.</p>
+
+  <h2>Test OTP</h2>
+  <input type="email" id="email" placeholder="Enter email">
+  <button onclick="sendOtp()">Send OTP</button>
+
+  <br><br>
+  <input type="text" id="otp" placeholder="Enter OTP">
+  <button onclick="verifyOtp()">Verify OTP</button>
+
+  <p id="result"></p>
 
   <script>
-    document.getElementById("sendOtpForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    async function sendOtp() {
       const email = document.getElementById("email").value;
-
       const res = await fetch("/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
       });
-
       const data = await res.json();
-      alert(data.message);
-    });
+      document.getElementById("result").innerText = data.message;
+    }
+
+    async function verifyOtp() {
+      const email = document.getElementById("email").value;
+      const otp = document.getElementById("otp").value;
+      const res = await fetch("/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      document.getElementById("result").innerText = data.message;
+    }
   </script>
 </body>
 </html>

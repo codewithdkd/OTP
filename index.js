@@ -1,30 +1,24 @@
- const express = require("express");
+const express = require("express");
 const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
 const path = require("path");
 
 const app = express();
 
-// Railway assigns port via environment variable
+// Use dynamic port assigned by Replit
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
+
 // Handle favicon requests
 app.get('/favicon.ico', (req, res) => res.sendStatus(204));
 
-// Temporary in-memory OTP store with expiry
+// Temporary in-memory OTP store
 let otpStore = {}; // { email: { otp: "123456", expires: timestamp } }
 
-// Nodemailer setup
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-});
+// Routes
 
 // Send OTP
 app.post("/send-otp", async (req, res) => {
@@ -33,20 +27,29 @@ app.post("/send-otp", async (req, res) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
-
   otpStore[email] = { otp, expires };
 
-  const mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: email,
-    subject: "Your OTP Code",
-    text: `Your OTP is: ${otp}. It is valid for 5 minutes.`
-  };
-
   try {
+    // Lazy initialize transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp}. It is valid for 5 minutes.`
+    };
+
     await transporter.sendMail(mailOptions);
     console.log(`✅ OTP sent to ${email}: ${otp}`);
     res.json({ success: true, message: "OTP sent successfully!" });
+
   } catch (error) {
     console.error("❌ Error sending OTP:", error);
     res.status(500).json({ success: false, message: "Error sending OTP" });
@@ -74,7 +77,7 @@ app.post("/verify-otp", (req, res) => {
   res.status(400).json({ success: false, message: "Invalid OTP" });
 });
 
-// Start server (Railway-safe)
-app.listen(PORT, "0.0.0.0", () => {
+// Start server
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
