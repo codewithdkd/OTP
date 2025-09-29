@@ -11,6 +11,8 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
+// Handle favicon requests
+app.get('/favicon.ico', (req, res) => res.sendStatus(204));
 
 // Temporary in-memory OTP store with expiry
 let otpStore = {}; // { email: { otp: "123456", expires: timestamp } }
