@@ -6,6 +6,7 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
     input, button { padding: 10px; margin: 5px; }
+    #countdown { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -14,17 +15,49 @@
 
   <h2>Test OTP</h2>
   <input type="email" id="email" placeholder="Enter email">
-  <button onclick="sendOtp()">Send OTP</button>
+  <button id="sendBtn" onclick="sendOtp()">Send OTP</button>
 
-  <br><br>
-  <input type="text" id="otp" placeholder="Enter OTP">
-  <button onclick="verifyOtp()">Verify OTP</button>
+  <div id="otpSection" style="display:none;">
+    <br>
+    <input type="text" id="otp" placeholder="Enter OTP">
+    <button onclick="verifyOtp()">Verify OTP</button>
+    <p id="countdown">OTP expires in: 5:00</p>
+    <button id="resendBtn" onclick="resendOtp()" style="display:none;">Resend OTP</button>
+  </div>
 
   <p id="result"></p>
 
   <script>
+    let timer;
+    let remainingSeconds = 300; // 5 minutes
+    let otpExpired = false;
+
+    function startCountdown() {
+      clearInterval(timer);
+      remainingSeconds = 300;
+      otpExpired = false;
+      document.getElementById("otpSection").style.display = "block";
+      document.getElementById("resendBtn").style.display = "none";
+
+      timer = setInterval(() => {
+        if (remainingSeconds <= 0) {
+          clearInterval(timer);
+          document.getElementById("result").innerText = "OTP expired! You can resend a new OTP.";
+          document.getElementById("resendBtn").style.display = "inline-block";
+          otpExpired = true;
+        } else {
+          let min = Math.floor(remainingSeconds / 60);
+          let sec = remainingSeconds % 60;
+          document.getElementById("countdown").innerText = `OTP expires in: ${min}:${sec < 10 ? '0'+sec : sec}`;
+          remainingSeconds--;
+        }
+      }, 1000);
+    }
+
     async function sendOtp() {
       const email = document.getElementById("email").value;
+      if (!email) return alert("Please enter an email.");
+
       const res = await fetch("/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,11 +65,15 @@
       });
       const data = await res.json();
       document.getElementById("result").innerText = data.message;
+
+      if (data.success) startCountdown();
     }
 
     async function verifyOtp() {
       const email = document.getElementById("email").value;
       const otp = document.getElementById("otp").value;
+      if (!otp) return alert("Enter the OTP.");
+
       const res = await fetch("/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,6 +81,31 @@
       });
       const data = await res.json();
       document.getElementById("result").innerText = data.message;
+
+      if (data.success) {
+        clearInterval(timer);
+        document.getElementById("otpSection").style.display = "none";
+        document.getElementById("result").innerHTML += "<br><strong>🎉 OTP verified successfully!</strong>";
+      }
+    }
+
+    async function resendOtp() {
+      if (!otpExpired) return; // Only allow resend after expiry
+
+      const email = document.getElementById("email").value;
+      if (!email) return alert("Enter your email first.");
+
+      const res = await fetch("/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      document.getElementById("result").innerText = data.message;
+
+      if (data.success) {
+        startCountdown(); // restart countdown
+      }
     }
   </script>
 </body>
